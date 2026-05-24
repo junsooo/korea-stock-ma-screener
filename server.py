@@ -188,11 +188,12 @@ def fetch_prices(code: str, needed: int) -> list[dict]:
     prices: list[dict] = []
 
     for match in re.finditer(r'<item data="(\d{8})\|(\d+)\|(\d+)\|(\d+)\|(\d+)\|(\d+)"', text):
-        raw_date, _open, _high, _low, close, _volume = match.groups()
+        raw_date, _open, _high, _low, close, volume = match.groups()
         prices.append(
             {
                 "date": f"{raw_date[:4]}-{raw_date[4:6]}-{raw_date[6:]}",
                 "close": int(close),
+                "volume": int(volume),
             }
         )
 

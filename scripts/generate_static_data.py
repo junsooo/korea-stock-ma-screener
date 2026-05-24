@@ -72,7 +72,7 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--max-ma", type=int, default=240)
     parser.add_argument("--max-recent", type=int, default=60)
     parser.add_argument("--max-decline", type=int, default=120)
-    parser.add_argument("--include-status", action="store_true", default=True)
+    parser.add_argument("--include-status", action="store_true", default=False)
     parser.add_argument("--skip-status", dest="include_status", action="store_false")
     return parser.parse_args()
 
@@ -82,7 +82,7 @@ def fetch_stock_payload(stock: dict, needed_days: int, include_status: bool) -> 
         prices = server.fetch_prices(stock["code"], needed_days)
         if len(prices) < needed_days - 8:
             return None
-        status = server.fetch_trading_status(stock["code"]) if include_status else {"excluded": False, "reasons": []}
+        status = server.fetch_trading_status(stock["code"]) if include_status else derive_trading_status(prices)
     except (OSError, TimeoutError, URLError):
         return None
 
@@ -113,6 +113,41 @@ def compact_stock(item: dict, date_index: dict[str, int]) -> dict:
     else:
         compact["i"] = indexes
     return compact
+
+
+def derive_trading_status(prices: list[dict]) -> dict:
+    recent = prices[-260:]
+    zero_volume_run = 0
+    same_close_run = 0
+    max_zero_volume_run = 0
+    max_same_close_run = 0
+    previous_close = None
+
+    for point in recent:
+        volume = point.get("volume", 1)
+        if volume == 0:
+            zero_volume_run += 1
+        else:
+            zero_volume_run = 0
+        max_zero_volume_run = max(max_zero_volume_run, zero_volume_run)
+
+        if previous_close is not None and point["close"] == previous_close:
+            same_close_run += 1
+        else:
+            same_close_run = 0
+        max_same_close_run = max(max_same_close_run, same_close_run)
+        previous_close = point["close"]
+
+    reasons = []
+    if max_zero_volume_run >= 5:
+        reasons.append(f"최근 1년 내 거래량 0 연속 {max_zero_volume_run}거래일")
+    elif max_same_close_run >= 20:
+        reasons.append(f"최근 1년 내 종가 동일 연속 {max_same_close_run + 1}거래일")
+
+    return {
+        "excluded": bool(reasons),
+        "reasons": reasons,
+    }
 
 
 if __name__ == "__main__":
