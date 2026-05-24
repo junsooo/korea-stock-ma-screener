@@ -1,0 +1,125 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>한국 주식 이동평균선 전환 검색기</title>
+    <link rel="stylesheet" href="styles.css">
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="workspace">
+        <aside class="control-panel" aria-label="검색 조건">
+          <div class="brand">
+            <span class="brand-mark">K</span>
+            <div>
+              <h1 id="appTitle">이동평균선 전환 검색</h1>
+              <p id="appSubtitle">하락하던 이동평균선이 최근 상승으로 돌아선 종목</p>
+            </div>
+          </div>
+
+          <label class="field">
+            <span>종목명 / 코드</span>
+            <input id="keyword" type="search" placeholder="예: 삼성전자, 005930">
+          </label>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>이동평균</span>
+              <input id="maWindow" type="number" min="20" max="240" value="120">
+            </label>
+            <label class="field">
+              <span>최근 상승일</span>
+              <input id="recentDays" type="number" min="5" max="60" value="20">
+            </label>
+          </div>
+
+          <div class="field-grid">
+            <label class="field">
+              <span>하락 확인일</span>
+              <input id="declineDays" type="number" min="20" max="120" value="60">
+            </label>
+            <label class="field">
+              <span>허용 반전 수</span>
+              <input id="tolerance" type="number" min="0" max="20" value="4">
+            </label>
+          </div>
+
+          <label class="field">
+            <span>시장</span>
+            <select id="market">
+              <option value="all">코스피 + 코스닥 전체</option>
+              <option value="kospi">코스피 전체</option>
+              <option value="kosdaq">코스닥 전체</option>
+            </select>
+          </label>
+
+          <label class="toggle-row">
+            <input id="strictMode" type="checkbox">
+            <span id="strictCopy">엄격 모드: 기간 내 모든 이동평균선 기울기가 조건과 일치해야 함</span>
+          </label>
+
+          <label class="toggle-row">
+            <input id="excludeHalted" type="checkbox" checked>
+            <span>최근 1년 이내 거래정지 관련 상태 종목 제외</span>
+          </label>
+
+          <div class="actions">
+            <button id="runSearch" type="button">검색</button>
+            <button id="reset" type="button" class="secondary">초기화</button>
+          </div>
+
+          <div class="upload-box">
+            <strong>데이터 출처</strong>
+            <p>네이버 금융의 코스피/코스닥 전체 종목과 차트용 일별 시세를 서버에서 가져와 계산합니다. 전체 검색은 시간이 걸릴 수 있습니다.</p>
+          </div>
+        </aside>
+
+        <section class="content">
+          <div class="summary-strip" aria-label="검색 요약">
+            <div>
+              <strong id="matchCount">0</strong>
+              <span>검색 결과</span>
+            </div>
+            <div>
+              <strong id="universeCount">0</strong>
+              <span>분석 종목</span>
+            </div>
+            <div>
+              <strong id="asOf">-</strong>
+              <span>기준일</span>
+            </div>
+            <div>
+              <strong id="excludedCount">0</strong>
+              <span>상태 제외</span>
+            </div>
+          </div>
+
+          <div class="split-view">
+            <section class="results-panel" aria-label="검색 결과">
+              <div class="section-head">
+                <h2>조건 만족 종목</h2>
+              <span id="dataSource">네이버 금융</span>
+              </div>
+              <div id="results" class="results-list"></div>
+            </section>
+
+            <section class="detail-panel" aria-label="종목 상세">
+              <div class="section-head">
+                <div>
+                  <h2 id="detailTitle">종목을 선택하세요</h2>
+                  <p id="detailMeta">검색 결과에서 종목을 누르면 이동평균선 흐름을 볼 수 있습니다.</p>
+                </div>
+                <span id="signalBadge" class="badge">대기</span>
+              </div>
+              <canvas id="chart" width="920" height="420" aria-label="가격 및 이동평균 차트"></canvas>
+              <div id="explain" class="explain"></div>
+            </section>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="app.js"></script>
+  </body>
+</html>
